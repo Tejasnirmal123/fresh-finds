@@ -1,5 +1,8 @@
 package com.fresh_finds.fresh_finds.config;
 
+import org.apache.catalina.connector.Connector;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.tomcat.servlet.TomcatServletWebServerFactory;
 import org.springframework.boot.web.server.WebServerFactoryCustomizer;
 import org.springframework.context.annotation.Configuration;
@@ -11,8 +14,13 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class TomcatMultipartConfig implements WebServerFactoryCustomizer<TomcatServletWebServerFactory> {
 
+    private static final Logger log = LoggerFactory.getLogger(TomcatMultipartConfig.class);
+
     @Override
     public void customize(TomcatServletWebServerFactory factory) {
-        factory.addConnectorCustomizers(connector -> connector.setProperty("maxPartCount", "100"));
+        factory.addConnectorCustomizers((Connector connector) -> {
+            connector.setMaxPartCount(100);
+            log.info("Configured Tomcat connector maxPartCount={}", connector.getMaxPartCount());
+        });
     }
 }
