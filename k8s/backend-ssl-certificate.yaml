@@ -1,0 +1,8 @@
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: fresh-finds-backend-ssl
+  namespace: default
+spec:
+  domains:
+    - api.nirmalfarm.com

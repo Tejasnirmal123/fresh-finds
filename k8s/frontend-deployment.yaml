@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fresh-finds-frontend
+  namespace: default
+  labels:
+    app: fresh-finds-frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: fresh-finds-frontend
+  template:
+    metadata:
+      labels:
+        app: fresh-finds-frontend
+    spec:
+      containers:
+      - name: frontend
+        image: gcr.io/fresh-finds-1/fresh-finds-frontend:latest
+        imagePullPolicy: Always
+        ports:
+        - name: http
+          containerPort: 80
+          protocol: TCP
+        # Health Check
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        # Resource Limits
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fresh-finds-frontend
+  namespace: default
+  labels:
+    app: fresh-finds-frontend
+spec:
+  type: LoadBalancer
+  selector:
+    app: fresh-finds-frontend
+  ports:
+  - name: http
+    protocol: TCP
+    port: 80
+    targetPort: 80

@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: fresh-finds-frontend-ingress
+  namespace: default
+  annotations:
+    # Reserve a static IP address
+    kubernetes.io/ingress.global-static-ip-name: "fresh-finds-frontend-ip"
+    # Use Google Managed SSL Certificate
+    networking.gke.io/managed-certificates: "fresh-finds-frontend-ssl"
+    # Redirect HTTP to HTTPS
+    kubernetes.io/ingress.allow-http: "true"
+spec:
+  rules:
+  - host: nirmalfarm.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: fresh-finds-frontend
+            port:
+              number: 80

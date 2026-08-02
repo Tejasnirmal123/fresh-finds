@@ -1,0 +1,11 @@
+# Never commit credentials
+gcs-key.json
+*key*.json
+New Text Document.txt
+$null
+
+# Raw asset dump, not app source
+/images/
+
+# Editor
+.idea/

@@ -1,0 +1,1 @@
+Place product images in public/images (apples.jpg, bananas.jpg, mango.jpg, grapes.jpg, tomato.jpg, potato.jpg, spinach.jpg, carrot.jpg). You can use your own images or free placeholders.
