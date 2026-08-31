@@ -1,29 +1,46 @@
 package com.fresh_finds.fresh_finds.utils;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
 
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Sends transactional email via Brevo's HTTPS API.
+ * SMTP is blocked on Railway's Hobby plan, so this uses Brevo's REST API instead.
+ */
 @Service
 public class EmailService {
 
-    private final JavaMailSender mailSender;
+    private static final String BREVO_API_URL = "https://api.brevo.com/v3/smtp/email";
+
+    private final RestClient restClient = RestClient.create();
+
+    @Value("${brevo.api-key}")
+    private String apiKey;
 
     @Value("${mail.from}")
     private String fromAddress;
 
-    public EmailService(JavaMailSender mailSender) {
-        this.mailSender = mailSender;
-    }
-
     public void sendOtpEmail(String toEmail, String otpCode) {
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom(fromAddress);
-        message.setTo(toEmail);
-        message.setSubject("Your FreshFinds verification code");
-        message.setText("Your verification code is: " + otpCode
-                + "\n\nThis code expires in 10 minutes. If you didn't request this, you can ignore this email.");
-        mailSender.send(message);
+        Map<String, Object> body = Map.of(
+                "sender", Map.of("email", fromAddress),
+                "to", List.of(Map.of("email", toEmail)),
+                "subject", "Your FreshFinds verification code",
+                "textContent", "Your verification code is: " + otpCode
+                        + "\n\nThis code expires in 10 minutes. If you didn't request this, you can ignore this email."
+        );
+
+        restClient.post()
+                .uri(BREVO_API_URL)
+                .header("api-key", apiKey)
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
+                .body(body)
+                .retrieve()
+                .toBodilessEntity();
     }
 }
