@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { addToCart } from '../services/api';
+import { addToCart, navigateTo } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function ProductCard({ product, onAddToCart }) {
   const [adding, setAdding] = useState(false);
+  const { isAuthenticated } = useAuth();
   const renderStars = (rating) => {
     return Array.from({ length: 5 }, (_, i) => (
       <svg
@@ -55,6 +57,10 @@ export default function ProductCard({ product, onAddToCart }) {
         <button 
           onClick={async () => {
             if (adding) return;
+            if (!isAuthenticated()) {
+              navigateTo('login');
+              return;
+            }
             setAdding(true);
             try {
               await addToCart({ productId: product.id, quantity: 1 });

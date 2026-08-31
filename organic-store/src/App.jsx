@@ -26,22 +26,10 @@ function AppContent() {
   const { isAuthenticated, loading, user } = useAuth();
 
   useEffect(() => {
-    // Check authentication status periodically
-    const checkAuth = () => {
-      if (!loading && !isAuthenticated() && currentPage !== 'login' && currentPage !== 'signup') {
-        setCurrentPage('login');
-      }
-      // Redirect to home if authenticated and on login/signup pages
-      if (!loading && isAuthenticated() && (currentPage === 'login' || currentPage === 'signup')) {
-        setCurrentPage('home');
-      }
-    };
-    
-    checkAuth();
-    // Check every 2 seconds for token expiry
-    const interval = setInterval(checkAuth, 2000);
-    
-    return () => clearInterval(interval);
+    // Redirect to home if already authenticated and on login/signup pages
+    if (!loading && isAuthenticated() && (currentPage === 'login' || currentPage === 'signup')) {
+      setCurrentPage('home');
+    }
   }, [loading, isAuthenticated, currentPage]);
 
   const handleNavigation = (page, data = null) => {
@@ -99,23 +87,17 @@ function AppContent() {
       <Header cartCount={cartCount} onNavigate={handleNavigation} currentPage={currentPage} />
       <main className="flex-grow">
         {currentPage === 'home' ? (
-          <ProtectedRoute onNavigate={handleNavigation}>
-            <>
-              <Hero onNavigate={handleNavigation} />
-              <Features />
-              <Categories />
-              <SeasonalFavorites onNavigate={handleNavigation} />
-              <Testimonials />
-            </>
-          </ProtectedRoute>
+          <>
+            <Hero onNavigate={handleNavigation} />
+            <Features />
+            <Categories />
+            <SeasonalFavorites onNavigate={handleNavigation} />
+            <Testimonials />
+          </>
         ) : currentPage === 'shop' ? (
-          <ProtectedRoute onNavigate={handleNavigation}>
-            <Shop onCartUpdate={fetchCartCount} />
-          </ProtectedRoute>
+          <Shop onCartUpdate={fetchCartCount} />
         ) : currentPage === 'contact' ? (
-          <ProtectedRoute onNavigate={handleNavigation}>
-            <Contact />
-          </ProtectedRoute>
+          <Contact />
         ) : currentPage === 'cart' ? (
           <ProtectedRoute onNavigate={handleNavigation}>
             <Cart onCartUpdate={fetchCartCount} onNavigate={handleNavigation} />

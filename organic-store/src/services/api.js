@@ -51,6 +51,16 @@ export const setNavigationHandler = (handler) => {
 };
 
 /**
+ * Navigate without prop-drilling onNavigate through every component
+ * (e.g. redirecting to login when an unauthenticated user tries a gated action)
+ */
+export const navigateTo = (page, data = null) => {
+  if (globalNavigateHandler) {
+    globalNavigateHandler(page, data);
+  }
+};
+
+/**
  * Handle API response - check for 401 (unauthorized) and clear auth if needed
  */
 export const handleApiResponse = async (response) => {

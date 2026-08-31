@@ -29,7 +29,7 @@ public class EmailService {
         Map<String, Object> body = Map.of(
                 "sender", Map.of("email", fromAddress),
                 "to", List.of(Map.of("email", toEmail)),
-                "subject", "Your FreshFinds verification code",
+                "subject", "Your Nirmal Farm verification code",
                 "textContent", "Your verification code is: " + otpCode
                         + "\n\nThis code expires in 10 minutes. If you didn't request this, you can ignore this email."
         );

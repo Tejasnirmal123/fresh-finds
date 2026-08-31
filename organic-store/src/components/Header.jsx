@@ -115,7 +115,11 @@ export default function Header({ cartCount = 0, onNavigate, currentPage = 'home'
                 </button>
               </div>
             ) : (
-              <button className="p-2 text-gray-700 hover:text-fresh-green-600 transition-colors">
+              <button
+                onClick={(e) => handleNavClick(e, 'login')}
+                className="p-2 text-gray-700 hover:text-fresh-green-600 transition-colors"
+                title="Sign in"
+              >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
@@ -223,7 +227,13 @@ export default function Header({ cartCount = 0, onNavigate, currentPage = 'home'
                 </div>
               ) : (
                 <div className="p-4 border-b border-gray-200 bg-gray-50">
-                  <p className="text-sm text-gray-600">Not logged in</p>
+                  <p className="text-sm text-gray-600 mb-3">Not logged in</p>
+                  <button
+                    onClick={(e) => handleNavClick(e, 'login')}
+                    className="w-full px-4 py-2 rounded-lg font-medium text-white bg-fresh-green-600 hover:bg-fresh-green-700 transition-colors"
+                  >
+                    Sign In
+                  </button>
                 </div>
               )}
 
