@@ -671,20 +671,21 @@ export const getCategoryById = async (categoryId) => {
 };
 
 /**
- * Register a new user
+ * Start registration - creates a pending registration and emails an OTP.
+ * No account exists yet and no auth token is issued until verifyOtp succeeds.
  * @param {Object} userData - User registration data
  * @param {string} userData.email - User email
  * @param {string} userData.password - User password
  * @param {string} userData.firstName - User first name
  * @param {string} userData.lastName - User last name
  * @param {string} userData.phone - User phone (optional)
- * @returns {Promise<Object>} Auth response with token and user info
+ * @returns {Promise<Object>} { message } confirming the OTP was sent
  */
 export const register = async (userData) => {
   try {
     const url = `${API_BASE_URL}/auth/register`;
     console.log('Registering user:', url);
-    
+
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -692,28 +693,103 @@ export const register = async (userData) => {
       },
       body: JSON.stringify(userData),
     });
-    
+
     console.log('Response status:', response.status);
-    
+
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Error response:', errorText);
       throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
     }
-    
+
     const data = await response.json();
     console.log('Registration response:', data);
-    
+
     if (data.status === 'SUCCESS' && data.data) {
-      const authData = data.data;
-      // Don't store token after registration - user should login separately
-      // Just return the response data without storing auth token
-      return authData;
+      return data.data;
     }
-    
+
     throw new Error('Invalid response format');
   } catch (error) {
     console.error('Error registering user:', error);
+    throw error;
+  }
+};
+
+/**
+ * Verify the OTP sent during registration. On success, the account is
+ * created and an auth token is issued (auto-login), same as login().
+ * @param {string} email
+ * @param {string} otp
+ * @returns {Promise<Object>} Auth response with token and user info
+ */
+export const verifyOtp = async (email, otp) => {
+  try {
+    const url = `${API_BASE_URL}/auth/verify-otp`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, otp }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+    }
+
+    const data = await response.json();
+
+    if (data.status === 'SUCCESS' && data.data) {
+      const authData = data.data;
+      setAuthToken(authData.token, {
+        id: authData.id,
+        email: authData.email,
+        firstName: authData.firstName,
+        lastName: authData.lastName,
+        role: authData.role,
+      });
+      return authData;
+    }
+
+    throw new Error('Invalid response format');
+  } catch (error) {
+    console.error('Error verifying OTP:', error);
+    throw error;
+  }
+};
+
+/**
+ * Resend the registration OTP.
+ * @param {string} email
+ * @returns {Promise<Object>} { message }
+ */
+export const resendOtp = async (email) => {
+  try {
+    const url = `${API_BASE_URL}/auth/resend-otp`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+    }
+
+    const data = await response.json();
+
+    if (data.status === 'SUCCESS' && data.data) {
+      return data.data;
+    }
+
+    throw new Error('Invalid response format');
+  } catch (error) {
+    console.error('Error resending OTP:', error);
     throw error;
   }
 };

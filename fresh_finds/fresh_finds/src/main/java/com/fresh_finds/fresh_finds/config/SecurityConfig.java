@@ -44,6 +44,8 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // Public endpoints - only auth and images
                 .requestMatchers("/fresh-finds/api/v1/auth/register").permitAll()
+                    .requestMatchers("/fresh-finds/api/v1/auth/verify-otp").permitAll()
+                    .requestMatchers("/fresh-finds/api/v1/auth/resend-otp").permitAll()
                     .requestMatchers("/fresh-finds/api/v1/auth/login").permitAll()
                 .requestMatchers("/fresh-finds/api/v1/images/**").permitAll()
                     .requestMatchers("/fresh-finds/api/v1/health").permitAll()

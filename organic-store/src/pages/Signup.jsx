@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { register } from '../services/api';
+import { register, verifyOtp, resendOtp } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function Signup({ onNavigate }) {
@@ -16,9 +16,13 @@ export default function Signup({ onNavigate }) {
     zipCode: '',
     country: 'India',
   });
+  const [step, setStep] = useState('form'); // 'form' | 'otp'
+  const [otp, setOtp] = useState('');
   const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(false);
+  const [info, setInfo] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const { login: setAuthUser } = useAuth();
 
   const handleChange = (e) => {
     setFormData({
@@ -28,6 +32,19 @@ export default function Signup({ onNavigate }) {
     setError(null);
   };
 
+  const startResendCooldown = () => {
+    setResendCooldown(60);
+    const interval = setInterval(() => {
+      setResendCooldown((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -35,20 +52,126 @@ export default function Signup({ onNavigate }) {
 
     try {
       const response = await register(formData);
-      // Show success message
-      setSuccess(true);
-      // Redirect to login page after a short delay
-      setTimeout(() => {
-        if (onNavigate) {
-          onNavigate('login');
-        }
-      }, 2000); // 2 second delay to show success message
+      setInfo(response.message || 'Verification code sent to your email.');
+      setStep('otp');
+      startResendCooldown();
     } catch (err) {
       setError(err.message || 'Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }
   };
+
+  const handleVerifyOtp = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    try {
+      const authData = await verifyOtp(formData.email, otp);
+      setAuthUser({
+        id: authData.id,
+        email: authData.email,
+        firstName: authData.firstName,
+        lastName: authData.lastName,
+        role: authData.role,
+      });
+      if (onNavigate) {
+        onNavigate('home');
+      }
+    } catch (err) {
+      setError(err.message || 'Verification failed. Please check the code and try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    setError(null);
+    setInfo(null);
+    try {
+      const response = await resendOtp(formData.email);
+      setInfo(response.message || 'Verification code resent.');
+      startResendCooldown();
+    } catch (err) {
+      setError(err.message || 'Failed to resend code. Please try again.');
+    }
+  };
+
+  if (step === 'otp') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md w-full space-y-8">
+          <div className="text-center">
+            <h2 className="text-3xl font-bold text-gray-900">Verify Your Email</h2>
+            <p className="mt-2 text-gray-600">
+              Enter the 6-digit code we sent to <span className="font-medium">{formData.email}</span>
+            </p>
+          </div>
+
+          <form className="mt-8 space-y-6 bg-white p-8 rounded-xl shadow-md" onSubmit={handleVerifyOtp}>
+            {info && (
+              <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
+                {info}
+              </div>
+            )}
+            {error && (
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                {error}
+              </div>
+            )}
+
+            <div>
+              <label htmlFor="otp" className="block text-sm font-medium text-gray-700 mb-2">
+                Verification Code
+              </label>
+              <input
+                id="otp"
+                name="otp"
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]{6}"
+                maxLength="6"
+                required
+                autoFocus
+                value={otp}
+                onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-fresh-green-600 text-center text-2xl tracking-widest"
+                placeholder="000000"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading || otp.length !== 6}
+              className="w-full bg-fresh-green-600 text-white py-3 rounded-lg font-semibold hover:bg-fresh-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {loading ? (
+                <>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  Verifying...
+                </>
+              ) : (
+                'Verify & Create Account'
+              )}
+            </button>
+
+            <div className="text-center text-sm text-gray-600">
+              Didn't get the code?{' '}
+              <button
+                type="button"
+                onClick={handleResendOtp}
+                disabled={resendCooldown > 0}
+                className="text-fresh-green-600 hover:text-fresh-green-700 font-medium disabled:text-gray-400 disabled:cursor-not-allowed"
+              >
+                {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend code'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
@@ -61,11 +184,6 @@ export default function Signup({ onNavigate }) {
 
         {/* Form */}
         <form className="mt-8 space-y-6 bg-white p-8 rounded-xl shadow-md" onSubmit={handleSubmit}>
-          {success && (
-            <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
-              Account created successfully! Redirecting to login page...
-            </div>
-          )}
           {error && (
             <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
               {error}
@@ -269,10 +387,10 @@ export default function Signup({ onNavigate }) {
               {loading ? (
                 <>
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  Creating account...
+                  Sending code...
                 </>
               ) : (
-                'Create Account'
+                'Continue'
               )}
             </button>
           </div>
