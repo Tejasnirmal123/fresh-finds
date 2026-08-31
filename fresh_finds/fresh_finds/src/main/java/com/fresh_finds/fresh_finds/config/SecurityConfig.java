@@ -49,6 +49,9 @@ public class SecurityConfig {
                     .requestMatchers("/fresh-finds/api/v1/auth/login").permitAll()
                 .requestMatchers("/fresh-finds/api/v1/images/**").permitAll()
                     .requestMatchers("/fresh-finds/api/v1/health").permitAll()
+                // Public browsing endpoints - shop listing/search and category list
+                .requestMatchers(HttpMethod.POST, "/fresh-finds/api/v1/products/search").permitAll()
+                .requestMatchers(HttpMethod.GET, "/fresh-finds/api/v1/categories").permitAll()
                 // Admin only endpoints - POST to create products and categories
                 .requestMatchers(HttpMethod.POST, "/fresh-finds/api/v1/products").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.POST, "/fresh-finds/api/v1/categories").hasRole("ADMIN")
